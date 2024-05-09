@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>MongoDB CRUD Demo</title>
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <h1 class="text-center mt-5">MongoDB CRUD Demo</h1>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <!-- Note creation -->
+
+            <div class="col-md-6">
+                <h2 class="mt-4 text-center">Create Note</h2>
+                <form id="createForm">
+                    <div class="form-group">
+                        <label for="title">Title:</label>
+                        <input type="text" class="form-control" id="title" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="content">Content:</label>
+                        <textarea class="form-control" id="content" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-1">Create</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <h2 class="text-center mt-3">Notes:</h2>
+                <ul id="records" class="list-group mt-2">
+                    {% for record in records %}
+                    <div class="mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3>{{ record.title }}</h3>
+                                <p>{{ record.content }}</p>
+                                <p><small>Created at: {{ record.timestamp }}</small></p>
+                            </div>
+                            <div>
+                                <button onclick="deleteRecord('{{ record._id }}')" 
+                                class="btn btn-danger mr-2">Delete</button>
+                                <button onclick="openModifyModal('{{ record._id }}', 
+                                '{{ record.title }}', '{{ record.content }}')" 
+                                class="btn btn-secondary">Modify</button>
+                            </div>
+                        </li>
+                    </div>
+                    {% endfor %}
+                </ul>
+            </div>
+
+
+        </div>
+    </div>
+    
+
+    <!-- Modify Note Modal -->
+    <div
+      class="modal fade"
+      id="modifyModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="modifyModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modifyModalLabel">Modify Note</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="newTitle">New Title:</label>
+              <input type="text" class="form-control" id="newTitle" required />
+            </div>
+            <div class="form-group">
+              <label for="newContent">New Content:</label>
+              <textarea
+                class="form-control"
+                id="newContent"
+                rows="4"
+                required
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="updateRecord()"
+            >
+              Update
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const createForm = document.getElementById("createForm");
+        createForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const title = document.getElementById("title").value;
+          const content = document.getElementById("content").value;
+          const data = { title, content };
+          const response = await fetch("/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+          if (response.ok) {
+            createForm.reset();
+            location.reload();
+          }
+        });
+      });
+
+      async function deleteRecord(item_id) {
+        const response = await fetch(`/delete/${item_id}`, {
+          method: "DELETE",
+        });
+        if (response.ok) location.reload();
+      }
+
+      async function updateRecord(item_id) {
+        const newTitle = document.getElementById("newTitle").value;
+        const newContent = document.getElementById("newContent").value;
+        const data = { title: newTitle, content: newContent };
+        const response = await fetch(`/update/${item_id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (response.ok) location.reload();
+      }
+
+      function openModifyModal(item_id, title, content) {
+        $("#modifyModal").modal("show");
+        document.getElementById("newTitle").value = title;
+        document.getElementById("newContent").value = content;
+
+        document.getElementById("modifyModalLabel").innerText = "Modify Note";
+
+        document
+          .getElementById("modifyModal")
+          .querySelector(".modal-footer button.btn-primary").onclick =
+          function () {
+            updateRecord(item_id);
+          };
+      }
+    </script>
+  </body>
+</html>
